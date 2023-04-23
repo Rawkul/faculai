@@ -5,17 +5,17 @@ This Python library is designed to detect solar faculae in solar images taken wi
 ## Installation
 
 To install the library, simply run in terminal:
+
 ``` bash
 pip install git+https://github.com/Rawkul/faculai.git
 ```
 
-Or download the code and place yourself in the faculai main folder, then run in a terminal:
+Alternatively,  you can download the code and then run in a terminal:
 
 ``` bash
-pip install .
+pip install path/to/faculai/code
 ```
-
-Other alternative way
+Replace path/to/faculai/code` with the actual code directory path.
 
 ### Requirements
 
