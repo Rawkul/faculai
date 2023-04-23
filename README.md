@@ -15,7 +15,7 @@ Alternatively,  you can download the code and then run in a terminal:
 ``` bash
 pip install path/to/faculai/code
 ```
-Replace path/to/faculai/code` with the actual code directory path.
+Replace `path/to/faculai/code` with the actual code directory path.
 
 ### Requirements
 
