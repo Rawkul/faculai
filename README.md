@@ -1,6 +1,6 @@
 # FaculAI
 
-This Python library is designed to detect solar faculae in solar images taken with the [Helioseismic and Magnetic Imager](http://hmi.stanford.edu/) (HMI) instrument on the Solar Dynamics Observatory. The library uses a [U-Net](https://arxiv.org/abs/1505.04597) deep learning model to detect the faculae and extracts useful information and statistics from the detected faculae, such as its area, position, etc.
+This Python library is designed to detect solar faculae in solar images taken with the [Helioseismic and Magnetic Imager](http://hmi.stanford.edu/) (HMI) instrument on the Solar Dynamics Observatory (SDO). The library uses a [U-Net](https://arxiv.org/abs/1505.04597) deep learning model to detect the faculae and extracts useful information and statistics from the detected faculae, such as its area, position, $B_{LOS}$, etc.
 
 ## Installation
 
