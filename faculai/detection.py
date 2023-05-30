@@ -4,22 +4,6 @@ import tensorflow as tf
 from scipy.stats import sigmaclip
 import pkg_resources
 
-import matplotlib.pyplot as plt
-
-def plot_images(images, num_x, num_y):
-    fig, axs = plt.subplots(num_x, num_y, figsize=(10,10))  # Adjust the figure size as necessary
-
-    for ax in axs.flat:
-        ax.axis('off')
-
-    for i, img in enumerate(images):
-        axs[i // num_y, i % num_y].imshow(img, cmap='gray')
-        axs[i // num_y, i % num_y].axis('off')
-
-    plt.tight_layout()
-    plt.show()
-
-
 class DetectionModel:
     def __init__(self, model_path=None, threshold = 0.5, batch_size = 10):
         """
