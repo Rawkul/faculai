@@ -270,11 +270,10 @@ def get_table(model, input_data):
             - 'x': numpy array, the x-coordinate of each pixel in arcseconds.
             - 'y': numpy array, the y-coordinate of each pixel in arcseconds.
             - 'pixel_size': float, the size of each pixel in arcseconds.
-        All arrays MUST BE of the same size (2, 400, 1900). 
+        Arrays can be of any size (2 X M x N) given both M >= 256 and N >= 256.
         In axis = 0, the index 0 is for North Pole data, and index = 0 is for 
         South Pole data. Also, it is assumed that the data is np.nan outsie the 
-        Sun sphere and above 60º latitude for North Pole and below -60º for 
-        South Pole.
+        Sun's observed sphere and below |+-latitudeº| values.
             
     Returns
     -------

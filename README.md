@@ -1,5 +1,7 @@
 # FaculAI
 
+![](https://img.shields.io/badge/faculai-1.1.0-green)
+
 This Python library is designed to detect solar faculae in solar images taken with the [Helioseismic and Magnetic Imager](http://hmi.stanford.edu/) (HMI) instrument on the Solar Dynamics Observatory (SDO). The library uses a [U-Net](https://arxiv.org/abs/1505.04597) deep learning model to detect the faculae and extracts useful information and statistics from the detected faculae, such as their areas, positions, $B_{LOS}$, etc.
 
 ## Installation
@@ -7,14 +9,15 @@ This Python library is designed to detect solar faculae in solar images taken wi
 To install the library, simply run in terminal:
 
 ``` bash
-pip install git+https://github.com/Rawkul/faculai.git
+pip install git+https://github.com/rawkul/faculai.git
 ```
 
-Alternatively,  you can download the code and then run in a terminal:
+Alternatively, you can download the code and then run in a terminal:
 
 ``` bash
 pip install path/to/faculai/code
 ```
+
 Replace `path/to/faculai/code` with the actual code directory path.
 
 ### Requirements
@@ -47,6 +50,8 @@ The first time you load DetectionModel class will take some time since the syste
 
 </p>
 
+> **❗Note:** At the moment it is designed exclusively for polar faculae, that is, faculae at latitudes $\varphi\ge|60^\circ|$. However, you can use it in other lower latitudes, but the U-Net is not designed to distinguish between other types of magnetic structures, so it may detect other bright structures as faculae. For example, sunspots appear bright in linear polarization images, which are the ones used for detecting polar faculae.
+
 ### Use other detection models
 
 The line:
@@ -61,7 +66,7 @@ loads the default trained U-Net stored in the package folder as `"faculai/unet.h
 model = DetectionModel("path/to/your/model")
 ```
 
-The model can be loaded either in `.h5` format or in Tensorflow SavedModel format. You are free to use your own keras model as long as it takes an input of shape `(numer_of_samples, 400, 380, 1)` and returns a segmentation mask of the same shape `(numer_of_samples, 400, 380, 1)`.
+The model can be loaded either in `.h5` format or in Tensorflow SavedModel format. You are free to use your own keras model as long as it takes an input of shape `(numer_of_samples, x, y, 1)` and returns a segmentation mask of the same shape `(numer_of_samples, x, y, 1)`. `x` and `y` are arbitrary image dimensions.
 
 ## License
 
