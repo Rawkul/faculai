@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='faculai',
-    version='1.1.1',
+    version='1.1.2',
     description = "A Python library for detecting and analyzing solar faculae in HMI images using machine learning.",
     url = "https://github.com/rawkul/faculai",
     author = "Antonio Reche García",
