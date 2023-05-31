@@ -10,7 +10,7 @@ setup(
     license = "MIT",
     packages=['faculai'],
     install_requires = [
-      "tensorflow==2.10",
+      "tensorflow>=2.11.1",
       "keras",
       "scipy",
       "numpy",
