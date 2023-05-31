@@ -22,8 +22,8 @@ Replace `path/to/faculai/code` with the actual code directory path.
 
 ### Requirements
 
--   Python version 3.10.x. Latest version may produce bugs.
--   TensorFlow **version 2.10**. Other versions may produce bugs loading convolution layers of the U-Net model.
+-   Python version 3.10.x. Latest versions may produce bugs.
+-   TensorFlow version >= 2.11.1.
 -   Keras
 -   SciPy
 -   NumPy
