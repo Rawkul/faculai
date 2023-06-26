@@ -1,2 +1,2 @@
 from .detection import DetectionModel
-from .stats import get_table, get_polar_areas
+from .stats import get_tables, get_polar_areas

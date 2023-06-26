@@ -1,6 +1,6 @@
 # FaculAI
 
-![](https://img.shields.io/badge/version-1.2.1-green)
+![](https://img.shields.io/badge/version-2.0.0-green)
 
 This Python library is designed to detect solar faculae in solar images taken with the [Helioseismic and Magnetic Imager](http://hmi.stanford.edu/) (HMI) instrument on the Solar Dynamics Observatory (SDO). The library uses a [U-Net](https://arxiv.org/abs/1505.04597) deep learning model to detect the faculae and extracts useful information and statistics from the detected faculae, such as their areas, positions, $B_{LOS}$, etc.
 
@@ -22,7 +22,7 @@ Replace `path/to/faculai/code` with the actual code directory path.
 
 ### Requirements
 
--   Python version 3.10.x. Latest versions may produce bugs.
+-   Python version >= 3.10.x.
 -   TensorFlow version >= 2.11.1.
 -   Keras
 -   SciPy
@@ -31,26 +31,34 @@ Replace `path/to/faculai/code` with the actual code directory path.
 
 ## Usage
 
-To use FaculAI, import `DetectionModel` class and the function `get_table`
+To use FaculAI, import `DetectionModel` class and the function `get_tables`
 
 ``` python
-from faculai import DetectionModel, get_table
+from faculai import DetectionModel, get_tables
 
 data = ... # Dictionary with ml, lat, lon, ...
 
 model = DetectionModel()
-table = get_table(model, data)
+ftable, ntable = get_tables(model, data)
 ```
 
-This will get you a pandas data frame stored in `table` variable. Type `help(get_table)` in a python terminal for details of the function, the input data, and the output table columns.
+This will get you 2 pandas data frames stored in `ftable` and `ntable` variables. Type `help(get_tables)` in a python terminal for details of the function, the input data, and the output table columns.
+
+`ftable` contains relevant parameters for all the faculae found in the images.
+`ntable` contains pinformation for regions with no faculae.
 
 <p class="callout info">
 
-The first time you load DetectionModel class will take some time since the system needs to load all TensorFlow and Keras necessary libraries into your CPU/GPU. Also, the first time you use the model in `get_table()` will take much longer since it will also load additional TensorFlow and Keras libraries . The rest of the time, it should work normally, lasting much less.
+The first time you load DetectionModel class will take some time since the system needs to load all TensorFlow and Keras necessary libraries into your CPU/GPU. Also, the first time you use the model in `get_tables()` will take much longer since it will also load additional TensorFlow and Keras libraries . The rest of the time, it should work normally, lasting much less.
 
 </p>
 
-> **❗Note:** At the moment it is designed exclusively for polar faculae, that is, faculae at latitudes $\varphi\ge|60^\circ|$. However, you can use it in other lower latitudes, but the U-Net is not designed to distinguish between other types of magnetic structures, so it may detect other bright structures as faculae. For example, sunspots appear bright in linear polarization images, which are the ones used for detecting polar faculae.
+> **❗Note:** At the moment, this package is designed exclusively for polar faculae, 
+that is, faculae at latitudes $\varphi\ge|60^\circ|$ (Quiet Sun regions). However, you can use it in other 
+lower latitudes, but the U-Net is not designed to distinguish between other types of 
+magnetic structures, so it may detect other bright structures as faculae if you provide 
+different regions. For example, sunspots appear bright in linear polarization images, 
+which are the images used for detecting polar faculae.
 
 ### Use other detection models
 

@@ -248,9 +248,12 @@ def get_facula_area(labeled_mask, label, lat, lon, pixel_size, r):
     area *= r**2
     return area
 
-def get_table(model, input_data):
+def get_tables(model, input_data):
     """
-    Generate a table of faculae properties from a model and input data.
+    Generate two tables with information related to polar faculae images:
+    > Table 1 will get several features of all the faculae present in the input images.
+    > Table 2 will get several features of the regions with no faculae in the input images.
+    See below for more information.
     
     Parameters
     ----------
@@ -263,13 +266,14 @@ def get_table(model, input_data):
               the output table will have the same date-time format.
             - 'ml': numpy array, the linear polarizarion of the image. This 
                data is used for faculae detection.
-            - 'mv': numpy array, the circular polarizarion of the image.
-            - 'mi': numpy array, integrated I stokes parameter of the image.
-            - 'lat': numpy array, the latitude coordinates of the data.
-            - 'lon': numpy array, the longitude coordinates of the data.
+            - 'blos': numpy array, the magnetogram, i.e., the line-of-sight magnetic field image.
+            - 'mi': numpy array, integrated I stokes parameter image.
+            - 'lat': numpy array, the latitude coordinates of each pixel in the image, in degrees.
+            - 'lon': numpy array, the longitude coordinates of each pixel in the image, in degrees.
             - 'x': numpy array, the x-coordinate of each pixel in arcseconds.
             - 'y': numpy array, the y-coordinate of each pixel in arcseconds.
             - 'pixel_size': float, the size of each pixel in arcseconds.
+            - 'helio': numpy array, the heliocentric angles of each pixel in the image.
         Arrays can be of any size (2 X M x N) given both M >= 256 and N >= 256.
         In axis = 0, the index 0 is for North Pole data, and index = 0 is for 
         South Pole data. Also, it is assumed that the data is np.nan outsie the 
@@ -277,7 +281,9 @@ def get_table(model, input_data):
             
     Returns
     -------
-    tbl : pandas DataFrame
+    A tuple with 2 pandas DataFrames:
+        
+    #1 : pandas DataFrame,
         A table of faculae properties, with the following columns:
             - 'date': string, the date of the input data. This column serves as
                image id ince each image has a different observation date.
@@ -306,8 +312,8 @@ def get_table(model, input_data):
                facula in pixels (is the axis 1 index value in the array).
             - 'y_pix_centroid': float, the y-coordinate of the centroid of each 
                facula in pixels (is the axis 2 index value in the array).
-            - 'mv_mean': float, the mean V-magnetogram value of each facula.
-            - 'mv_sd': float, the standard deviation of V-magnetogram value of 
+            - 'blos_mean': float, the mean B_LOS value of each facula.
+            - 'blos_sd': float, the standard deviation of B_LOS value of 
                each facula.
             - 'mi_mean': float, the mean I-magnetogram value of each facula.
             - 'mi_sd': float, the standard deviation of I-magnetogram value of 
@@ -315,17 +321,35 @@ def get_table(model, input_data):
             - 'ml_mean': float, the mean ml-magnetogram value of each facula.
             - 'ml_sd': float, the standard deviation of ml-magnetogram value of 
                each facula.
+            - 'helio_mean': float, the mean heliocentric angle of each facula.
+            - 'helio_sd': float, the standard deviation of the heliographic angles of each facula.
+    
+    #2 : pandas DataFrame,
+        A table with information about the regions with no faculae:
+            - 'date': string, the date of the input data. This column serves as
+               image id since each image has a different observation date.
+            - 'num_pixels_north/south': int, the number of pixels with no faculae in the
+               North Pole/South Pole.
+            - 'blos_mean_north/south': float, the mean B_LOS value in regions with no
+               faculae in the North Pole/South Pole.
+            - 'blos_sd_north/south': float, the standard deviation of B_LOS value in
+               regions with no faculae in the North Pole/South Pole.
+            - 'blos_max_north/south': float, the maximum B_LOS value in regions with no
+               faculae in the North Pole/South Pole.
+            - 'blos_min_north/south': float, the minimum B_LOS value in regions with no
+               faculae in the North Pole/South Pole.
     """
-    # 1. Copy the data to modify it without affecting the original variable
+    # Copy the data to modify it without affecting the original variable
     data = deepcopy(input_data)
     
-    # 2. Detect faculae
+    # Detect faculae
     faculae, num_faculae = model(data["ml"])
+    inverse_mask = faculae.copy()
     
-    # 3. Compute centroids in pixel coordinates
+    # Compute centroids in pixel coordinates
     pole_c, x_px_c, y_px_c = compute_pixel_centroids(faculae, num_faculae)
     
-    # 4. Remove nans from the data
+    # Remove nans from the data
     nan_mask = ~np.isnan(data["ml"])
     faculae = faculae[nan_mask]
     data.pop("date")
@@ -333,33 +357,36 @@ def get_table(model, input_data):
     for k in data.keys():
         data[k] = data[k][nan_mask]
     
-    # 5. Compute the centroids in latitude and longitude
+    # Compute the centroids in latitude and longitude
     lat_centroids_mean, lat_centroids_sd = get_mean_sd(faculae, num_faculae, data["lat"])
     lon_centroids_mean, lon_centroids_sd = get_mean_sd(faculae, num_faculae, data["lon"])
     
-    # 6. Compute the centroids in x, y (arcsecs)
+    # Compute the centroids in x, y (arcsecs)
     x_centroids_mean, x_centroids_sd = get_mean_sd(faculae, num_faculae, data["x"])
     y_centroids_mean, y_centroids_sd = get_mean_sd(faculae, num_faculae, data["y"])
     
-    # 7. Compute the areas
+    # Compute the areas
     pixel_size = input_data["pixel_size"] # in km
-    # Solar radius from https://arxiv.org/abs/astro-ph/9803131
-    r_sun = 695508 # km
+    # Solar radius from https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41
+    r_sun = 695700 # km
     areas = [get_facula_area(faculae, facula, data["lat"], data["lon"], pixel_size, r_sun) for facula in range(1, num_faculae + 1)]
     
-    # 8. Number of pixels per facula
+    # Number of pixels per facula
     num_px = get_number_of_pixels(faculae, num_faculae)
     
-    # 9. Stats for V-magnetogram
-    mv_mean, mv_sd = get_mean_sd(faculae, num_faculae, data["mv"])
+    # Stats for V-magnetogram
+    b_mean, b_sd = get_mean_sd(faculae, num_faculae, data["blos"])
     
-    # 10. Stats for I-magnetogram
+    # Stats for I-magnetogram
     mi_mean, mi_sd = get_mean_sd(faculae, num_faculae, data["mi"])
     
-    # 11. Stats for ml-magnetogram
+    # Stats for ml-magnetogram
     ml_mean, ml_sd = get_mean_sd(faculae, num_faculae, data["ml"])
     
-    # 12. Create the output table and add the data
+    # Heliographic coordinates
+    helio_mean, helio_sd = get_mean_sd(faculae, num_faculae, data["helio"])
+    
+    # Create the output table and add the data
     tbl = pd.DataFrame({"date" : input_data["date"],
                         "facula_id" : range(1, num_faculae + 1)})
     tbl["num_pixels"] = num_px
@@ -375,14 +402,47 @@ def get_table(model, input_data):
     tbl["pole"] = pole_c
     tbl["x_pix_centroid"] = x_px_c
     tbl["y_pix_centroid"] = y_px_c
-    tbl["mv_mean"] = mv_mean
-    tbl["mv_sd"] = mv_sd
+    tbl["blos_mean"] = b_mean
+    tbl["blos_sd"] = b_sd
     tbl["mi_mean"] = mi_mean
     tbl["mi_sd"] = mi_sd
     tbl["ml_mean"] = ml_mean
     tbl["ml_sd"] = ml_sd
+    tbl["helio_mean"] = helio_mean
+    tbl["helio_sd"] = helio_sd
     
-    return tbl
+    # Obtain magnetic field information from regions with no faculae.
+    # Create an inverse mask
+    inverse_mask = np.where((inverse_mask == 0) & ~np.isnan(input_data["ml"]), 1, 0).astype(np.uint8)
+
+    # North Pole (1st position in array)
+    num_px_n = np.sum(inverse_mask[0,:,:])
+    b_mean_n = ndimage.mean(input_data["blos"][0,:,:], inverse_mask[0,:,:])
+    b_max_n = ndimage.maximum(input_data["blos"][0,:,:], inverse_mask[0,:,:])
+    b_min_n = ndimage.minimum(input_data["blos"][0,:,:], inverse_mask[0,:,:])
+    b_sd_n = ndimage.standard_deviation(input_data["blos"][0,:,:], inverse_mask[0,:,:])
+    
+    # South Pole (2nd position in array)
+    num_px_s = np.sum(inverse_mask[1,:,:])
+    b_mean_s = ndimage.mean(input_data["blos"][1,:,:], inverse_mask[1,:,:])
+    b_max_s = ndimage.maximum(input_data["blos"][1,:,:], inverse_mask[1,:,:])
+    b_min_s = ndimage.minimum(input_data["blos"][1,:,:], inverse_mask[1,:,:])
+    b_sd_s = ndimage.standard_deviation(input_data["blos"][1,:,:], inverse_mask[1,:,:])
+    
+    # Create another table with information for regions with no faculae.
+    out_tbl = pd.DataFrame({"date" : [input_data["date"]],
+                            "num_pixels_north" : [num_px_n],
+                            "num_pixels_south" : [num_px_s],
+                            "blos_mean_north" : [b_mean_n],
+                            "blos_max_north" : [b_max_n],
+                            "blos_min_north" : [b_min_n],
+                            "blos_sd_north" : [b_sd_n],
+                            "blos_mean_south" : [b_mean_s],
+                            "blos_max_south" : [b_max_s],
+                            "blos_min_south" : [b_min_s],
+                            "blos_sd_south" : [b_sd_s]})
+    
+    return tbl, out_tbl
 
 # Data comes with NaNs 
 def get_cap_area(lat, lon, r_sun):
