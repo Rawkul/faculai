@@ -338,6 +338,14 @@ def get_tables(model, input_data):
                faculae in the North Pole/South Pole.
             - 'blos_min_north/south': float, the minimum B_LOS value in regions with no
                faculae in the North Pole/South Pole.
+            - 'ml_mean_north/south': float, the mean mL value in regions with no
+               faculae in the North Pole/South Pole.
+            - 'ml_sd_north/south': float, the standard deviation of mL value in
+               regions with no faculae in the North Pole/South Pole.
+            - 'mi_mean_north/south': float, the mean I value in regions with no
+               faculae in the North Pole/South Pole.
+            - 'mi_sd_north/south': float, the standard deviation of I value in
+               regions with no faculae in the North Pole/South Pole.
     """
     # Copy the data to modify it without affecting the original variable
     data = deepcopy(input_data)
@@ -429,6 +437,16 @@ def get_tables(model, input_data):
     b_min_s = ndimage.minimum(input_data["blos"][1,:,:], inverse_mask[1,:,:])
     b_sd_s = ndimage.standard_deviation(input_data["blos"][1,:,:], inverse_mask[1,:,:])
     
+    ml_mean_north = ndimage.mean(input_data["ml"][0,:,:], inverse_mask[0,:,:])
+    ml_mean_south = ndimage.mean(input_data["ml"][1,:,:], inverse_mask[1,:,:])
+    ml_sd_north = ndimage.standard_deviation(input_data["ml"][0,:,:], inverse_mask[0,:,:])
+    ml_sd_south = ndimage.standard_deviation(input_data["ml"][1,:,:], inverse_mask[1,:,:])
+    
+    mi_mean_north = ndimage.mean(input_data["mi"][0,:,:], inverse_mask[0,:,:])
+    mi_mean_south = ndimage.mean(input_data["mi"][1,:,:], inverse_mask[1,:,:])
+    mi_sd_north = ndimage.standard_deviation(input_data["mi"][0,:,:], inverse_mask[0,:,:])
+    mi_sd_south = ndimage.standard_deviation(input_data["mi"][1,:,:], inverse_mask[1,:,:])
+    
     # Create another table with information for regions with no faculae.
     out_tbl = pd.DataFrame({"date" : [input_data["date"]],
                             "num_pixels_north" : [num_px_n],
@@ -440,7 +458,15 @@ def get_tables(model, input_data):
                             "blos_mean_south" : [b_mean_s],
                             "blos_max_south" : [b_max_s],
                             "blos_min_south" : [b_min_s],
-                            "blos_sd_south" : [b_sd_s]})
+                            "blos_sd_south" : [b_sd_s],
+                            "ml_mean_north" : [ml_mean_north],
+                            "ml_sd_north" : [ml_sd_north],
+                            "ml_mean_south" : [ml_mean_south],
+                            "ml_sd_south" : [ml_sd_south],
+                            "mi_mean_north" : [mi_mean_north],
+                            "mi_sd_north" : [mi_sd_north],
+                            "mi_mean_south" : [mi_mean_south],
+                            "mi_sd_south" : [mi_sd_south]})
     
     return tbl, out_tbl
 
