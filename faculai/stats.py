@@ -248,7 +248,7 @@ def get_facula_area(labeled_mask, label, lat, lon, pixel_size, r):
     area *= r**2
     return area
 
-def get_tables(model, input_data, compute_area = True):
+def get_tables(model, input_data, compute_facula = True, compute_area = True):
     """
     Generate two tables with information related to polar faculae images:
     > Table 1 will get several features of all the faculae present in the input images.
@@ -259,6 +259,10 @@ def get_tables(model, input_data, compute_area = True):
     ----------
     model : object
         The trained machine learning model to use for faculae detection.
+    compute_facula: boolean
+        If you do not want to compute faculae features, set compute_faculae = False.
+        In that case, the faculae table returned will be "None" and only non-faculae
+        table will contain information.
     compute_area: boolean
         If you wish to compute the area (true) with Delaunay triangulation or
         not (bool), in which case a value of 0 will be assigned for the area
@@ -358,74 +362,77 @@ def get_tables(model, input_data, compute_area = True):
     faculae, num_faculae = model(data["ml"])
     inverse_mask = faculae.copy()
     
-    # Compute centroids in pixel coordinates
-    pole_c, x_px_c, y_px_c = compute_pixel_centroids(faculae, num_faculae)
-    
-    # Remove nans from the data
-    nan_mask = ~np.isnan(data["ml"])
-    faculae = faculae[nan_mask]
-    data.pop("date")
-    data.pop("pixel_size")
-    for k in data.keys():
-        data[k] = data[k][nan_mask]
-    
-    # Compute the centroids in latitude and longitude
-    lat_centroids_mean, lat_centroids_sd = get_mean_sd(faculae, num_faculae, data["lat"])
-    lon_centroids_mean, lon_centroids_sd = get_mean_sd(faculae, num_faculae, data["lon"])
-    
-    # Compute the centroids in x, y (arcsecs)
-    x_centroids_mean, x_centroids_sd = get_mean_sd(faculae, num_faculae, data["x"])
-    y_centroids_mean, y_centroids_sd = get_mean_sd(faculae, num_faculae, data["y"])
-    
-    # Compute the areas
-    
-    if compute_area:
-        pixel_size = input_data["pixel_size"] # in km
-        # Solar radius from https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41
-        r_sun = 695700 # km
-        areas = [get_facula_area(faculae, facula, data["lat"], data["lon"], pixel_size, r_sun) for facula in range(1, num_faculae + 1)]
-    else:
-        areas = [0 for facula in range(1, num_faculae + 1)]
+    if compute_facula:
+        # Compute centroids in pixel coordinates
+        pole_c, x_px_c, y_px_c = compute_pixel_centroids(faculae, num_faculae)
+        
+        # Remove nans from the data
+        nan_mask = ~np.isnan(data["ml"])
+        faculae = faculae[nan_mask]
+        data.pop("date")
+        data.pop("pixel_size")
+        for k in data.keys():
+            data[k] = data[k][nan_mask]
+        
+        # Compute the centroids in latitude and longitude
+        lat_centroids_mean, lat_centroids_sd = get_mean_sd(faculae, num_faculae, data["lat"])
+        lon_centroids_mean, lon_centroids_sd = get_mean_sd(faculae, num_faculae, data["lon"])
+        
+        # Compute the centroids in x, y (arcsecs)
+        x_centroids_mean, x_centroids_sd = get_mean_sd(faculae, num_faculae, data["x"])
+        y_centroids_mean, y_centroids_sd = get_mean_sd(faculae, num_faculae, data["y"])
+        
+        # Compute the areas
+        
+        if compute_area:
+            pixel_size = input_data["pixel_size"] # in km
+            # Solar radius from https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41
+            r_sun = 695700 # km
+            areas = [get_facula_area(faculae, facula, data["lat"], data["lon"], pixel_size, r_sun) for facula in range(1, num_faculae + 1)]
+        else:
+            areas = [0 for facula in range(1, num_faculae + 1)]
 
-    # Number of pixels per facula
-    num_px = get_number_of_pixels(faculae, num_faculae)
-    
-    # Stats for V-magnetogram
-    b_mean, b_sd = get_mean_sd(faculae, num_faculae, data["blos"])
-    
-    # Stats for I-magnetogram
-    mi_mean, mi_sd = get_mean_sd(faculae, num_faculae, data["mi"])
-    
-    # Stats for ml-magnetogram
-    ml_mean, ml_sd = get_mean_sd(faculae, num_faculae, data["ml"])
-    
-    # Heliographic coordinates
-    helio_mean, helio_sd = get_mean_sd(faculae, num_faculae, data["helio"])
-    
-    # Create the output table and add the data
-    tbl = pd.DataFrame({"date" : input_data["date"],
-                        "facula_id" : range(1, num_faculae + 1)})
-    tbl["num_pixels"] = num_px
-    tbl["area"] = areas
-    tbl["lat_centroid_mean"] = lat_centroids_mean
-    tbl["lat_centroid_sd"] = lat_centroids_sd
-    tbl["lon_centroid_mean"] = lon_centroids_mean
-    tbl["lon_centroid_sd"] = lon_centroids_sd
-    tbl["x_arcs_centroid_mean"] = x_centroids_mean
-    tbl["x_arcs_centroid_sd"] = x_centroids_sd
-    tbl["y_arcs_centroid_mean"] = y_centroids_mean
-    tbl["y_arcs_centroid_sd"] = y_centroids_sd
-    tbl["pole"] = pole_c
-    tbl["x_pix_centroid"] = x_px_c
-    tbl["y_pix_centroid"] = y_px_c
-    tbl["blos_mean"] = b_mean
-    tbl["blos_sd"] = b_sd
-    tbl["mi_mean"] = mi_mean
-    tbl["mi_sd"] = mi_sd
-    tbl["ml_mean"] = ml_mean
-    tbl["ml_sd"] = ml_sd
-    tbl["helio_mean"] = helio_mean
-    tbl["helio_sd"] = helio_sd
+        # Number of pixels per facula
+        num_px = get_number_of_pixels(faculae, num_faculae)
+        
+        # Stats for V-magnetogram
+        b_mean, b_sd = get_mean_sd(faculae, num_faculae, data["blos"])
+        
+        # Stats for I-magnetogram
+        mi_mean, mi_sd = get_mean_sd(faculae, num_faculae, data["mi"])
+        
+        # Stats for ml-magnetogram
+        ml_mean, ml_sd = get_mean_sd(faculae, num_faculae, data["ml"])
+        
+        # Heliographic coordinates
+        helio_mean, helio_sd = get_mean_sd(faculae, num_faculae, data["helio"])
+        
+        # Create the output table and add the data
+        tbl = pd.DataFrame({"date" : input_data["date"],
+                            "facula_id" : range(1, num_faculae + 1)})
+        tbl["num_pixels"] = num_px
+        tbl["area"] = areas
+        tbl["lat_centroid_mean"] = lat_centroids_mean
+        tbl["lat_centroid_sd"] = lat_centroids_sd
+        tbl["lon_centroid_mean"] = lon_centroids_mean
+        tbl["lon_centroid_sd"] = lon_centroids_sd
+        tbl["x_arcs_centroid_mean"] = x_centroids_mean
+        tbl["x_arcs_centroid_sd"] = x_centroids_sd
+        tbl["y_arcs_centroid_mean"] = y_centroids_mean
+        tbl["y_arcs_centroid_sd"] = y_centroids_sd
+        tbl["pole"] = pole_c
+        tbl["x_pix_centroid"] = x_px_c
+        tbl["y_pix_centroid"] = y_px_c
+        tbl["blos_mean"] = b_mean
+        tbl["blos_sd"] = b_sd
+        tbl["mi_mean"] = mi_mean
+        tbl["mi_sd"] = mi_sd
+        tbl["ml_mean"] = ml_mean
+        tbl["ml_sd"] = ml_sd
+        tbl["helio_mean"] = helio_mean
+        tbl["helio_sd"] = helio_sd
+    else:
+        tbl = None
     
     # Obtain magnetic field information from regions with no faculae.
     # Create an inverse mask
