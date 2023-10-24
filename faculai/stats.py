@@ -248,7 +248,7 @@ def get_facula_area(labeled_mask, label, lat, lon, pixel_size, r):
     area *= r**2
     return area
 
-def get_tables(model, input_data):
+def get_tables(model, input_data, compute_area = True):
     """
     Generate two tables with information related to polar faculae images:
     > Table 1 will get several features of all the faculae present in the input images.
@@ -259,6 +259,10 @@ def get_tables(model, input_data):
     ----------
     model : object
         The trained machine learning model to use for faculae detection.
+    compute_area: boolean
+        If you wish to compute the area (true) with Delaunay triangulation or
+        not (bool), in which case a value of 0 will be assigned for the area
+        of each facula. Area ccomputation is slow, so you might want to avoid it.
     input_data : dict
         A dictionary containing the input data used for faculae detection. 
         Required keys are:
@@ -374,11 +378,15 @@ def get_tables(model, input_data):
     y_centroids_mean, y_centroids_sd = get_mean_sd(faculae, num_faculae, data["y"])
     
     # Compute the areas
-    pixel_size = input_data["pixel_size"] # in km
-    # Solar radius from https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41
-    r_sun = 695700 # km
-    areas = [get_facula_area(faculae, facula, data["lat"], data["lon"], pixel_size, r_sun) for facula in range(1, num_faculae + 1)]
     
+    if compute_area:
+        pixel_size = input_data["pixel_size"] # in km
+        # Solar radius from https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41
+        r_sun = 695700 # km
+        areas = [get_facula_area(faculae, facula, data["lat"], data["lon"], pixel_size, r_sun) for facula in range(1, num_faculae + 1)]
+    else:
+        areas = [0 for facula in range(1, num_faculae + 1)]
+
     # Number of pixels per facula
     num_px = get_number_of_pixels(faculae, num_faculae)
     
